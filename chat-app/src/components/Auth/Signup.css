@@ -1,0 +1,10 @@
+/* Signup.css - same look as SignIn but kept separate */
+.signup-wrapper { min-height:100vh; background:#f4f6fb; display:flex; align-items:center; justify-content:center; padding:24px; }
+.signup-card { max-width:460px; width:100%; background:#fff; padding:36px; border-radius:14px; box-shadow:0 10px 30px rgba(0,0,0,0.08); border:1px solid #e7e7e7; }
+.title { text-align:center; font-size:26px; font-weight:700; color:#111; margin-bottom:6px; }
+.subtitle { text-align:center; color:#6b7280; margin-bottom:22px; }
+.label { display:block; font-weight:600; color:#333; margin-top:6px; }
+.input-box { width:100%; padding:12px 14px; border-radius:10px; border:1px solid #d1d5db; margin-top:6px; margin-bottom:14px; }
+.signup-btn { width:100%; padding:12px; border-radius:10px; background:#2563eb; color:#fff; border:none; font-weight:600; cursor:pointer; }
+.login-text { text-align:center; margin-top:14px; color:#555; }
+.login-link { color:#2563eb; cursor:pointer; font-weight:700; }

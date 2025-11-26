@@ -1,0 +1,71 @@
+import React, { useEffect } from "react";
+import { fetchUsers, getUser } from "../../Slices/userslice";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import "./Home.css";
+
+export default function Home() {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
+  const { users, currentUser } = useSelector((state) => state.user);
+
+  useEffect(() => {
+    dispatch(getUser());
+    dispatch(fetchUsers());
+  }, [dispatch]);
+
+  // Protect routes
+  useEffect(() => {
+    if (!currentUser) {
+      navigate("/");
+    }
+  }, [currentUser, navigate]);
+
+  const getInitials = (name) => {
+    if (!name) return "?";
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase();
+  };
+
+  return (
+    <div className="home-wrapper">
+      <div className="header">
+        <h1 className="header-title">Chats</h1>
+
+        <div className="avatar">{getInitials(currentUser?.name)}</div>
+      </div>
+
+      <div className="content-area">
+        <div className="welcome-box">
+          <h2>Welcome, {currentUser?.name}</h2>
+          <p>You are logged in</p>
+        </div>
+
+        <div className="contact-list">
+          <h3 className="contact-title">Contacts</h3>
+
+          {users
+            ?.filter((u) => u.email !== currentUser?.email)
+            .map((user, index) => (
+              <div
+                key={index}
+                className="contact-card"
+                onClick={() => navigate("/chatpage", { state: user })}
+              >
+                <div className="contact-avatar">{getInitials(user.name)}</div>
+
+                <div>
+                  <p className="contact-name">{user.name}</p>
+                  <p className="contact-sub">Tap to chat</p>
+                </div>
+              </div>
+            ))}
+        </div>
+      </div>
+    </div>
+  );
+}

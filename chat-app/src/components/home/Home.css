@@ -1,0 +1,13 @@
+/* Home.css */
+.home-wrapper { min-height:100vh; background:#f3f5fb; font-family:Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; }
+.header { width:100%; background:#fff; padding:14px 20px; display:flex; justify-content:space-between; align-items:center; box-shadow:0 2px 12px rgba(0,0,0,0.06); }
+.header-title { font-size:20px; font-weight:700; color:#111; }
+.avatar { width:44px; height:44px; border-radius:50%; background:#2563eb; color:#fff; font-weight:700; display:flex; align-items:center; justify-content:center; box-shadow:0 6px 18px rgba(37,99,235,0.2); }
+.content-area { max-width:560px; margin:26px auto; padding:0 16px; }
+.welcome-box { background:#2563eb; color:#fff; padding:22px; border-radius:14px; box-shadow:0 14px 32px rgba(37,99,235,0.18); margin-bottom:20px; }
+.contact-list { background:#fff; padding:18px; border-radius:14px; box-shadow:0 8px 24px rgba(0,0,0,0.08); }
+.contact-card { display:flex; gap:12px; align-items:center; padding:12px; border-radius:12px; cursor:pointer; transition:all .18s; }
+.contact-card:hover { transform:translateY(-3px); background:#f6f8fb; }
+.contact-avatar { width:44px; height:44px; border-radius:50%; background:#e6e9ef; display:flex; align-items:center; justify-content:center; font-weight:700; color:#333; }
+.contact-name { font-weight:600; color:#111; }
+.contact-sub { color:#6b7280; font-size:13px; }
