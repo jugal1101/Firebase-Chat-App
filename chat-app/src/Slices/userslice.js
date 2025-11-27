@@ -5,10 +5,11 @@ import {
   signInWithEmailAndPassword,
 } from "firebase/auth";
 import { collection, getDocs, setDoc, doc, getDoc } from "firebase/firestore";
+// import Signup from "../Components/SignUp/Signup";
 
 const initializeState = {
   users: [],
-  currentUser: null,
+  currentUser: {},
   isLoading: false,
   error: null,
 };
@@ -29,10 +30,9 @@ export const SignUp = createAsyncThunk(
     const user = {
       name: name,
       email: userCredential.user.email,
-      uid: userCredential.user.uid,
     };
     await setDoc(doc(db, "users", email), user);
-    return { ...user, success: true };
+    return user;
   }
 );
 
@@ -45,8 +45,9 @@ export const SignIn = createAsyncThunk(
       password
     );
     const userDoc = await getDoc(doc(db, "users", email));
-    const userData = userDoc.exists() ? userDoc.data() : { email };
-    return { ...userData, success: true };
+    const userData = userDoc.data();
+
+    return userData;
   }
 );
 
@@ -56,64 +57,61 @@ export const fetchUsers = createAsyncThunk("user/read", async () => {
   return users;
 });
 
-const userSlice = createSlice({
+export const userSlice = createSlice({
   name: "user",
   initialState: initializeState,
   reducers: {
     getUser: (state) => {
-      try {
-        state.currentUser = JSON.parse(localStorage.getItem("user"));
-      } catch {
-        state.currentUser = null;
-      }
-    },
-    logout: (state) => {
-      localStorage.removeItem("user");
-      state.currentUser = null;
+      state.currentUser = JSON.parse(localStorage.getItem("user"));
     },
   },
   extraReducers: (builder) => {
     builder
       .addCase(SignUp.pending, (state) => {
         state.isLoading = true;
-        state.error = null;
       })
       .addCase(SignUp.fulfilled, (state, action) => {
         state.isLoading = false;
-        const already = state.users.find((u) => u.email === action.payload.email);
+
+        // avoid duplicate
+        const already = state.users.find(
+          (u) => u.email === action.payload.email
+        );
         if (!already) state.users.push(action.payload);
+
+        // make new user current user
         localStorage.setItem("user", JSON.stringify(action.payload));
         state.currentUser = action.payload;
       })
+
       .addCase(SignUp.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.error.message;
-        console.error("🔥 Signup failed:", action.error.message);
+        console.log("🔥 Signup failed:", action.error.message);
       })
       .addCase(fetchUsers.fulfilled, (state, action) => {
         state.users = action.payload;
       })
       .addCase(SignIn.pending, (state) => {
         state.isLoading = true;
-        state.error = null;
       })
       .addCase(SignIn.fulfilled, (state, action) => {
         const user = action.payload;
-        const isCheckUser = state.users.find((e) => e.email === user.email);
+        const isCheckUser = state.users.find((e) => e.email == user.email);
         if (!isCheckUser) {
           state.users.push(user);
         }
         localStorage.setItem("user", JSON.stringify(user));
         state.currentUser = user;
+        alert("sigin successfully!!");
         state.isLoading = false;
       })
-      .addCase(SignIn.rejected, (state, action) => {
+      .addCase(SignIn.rejected, (state) => {
         state.isLoading = false;
-        state.error = action.error.message || "signin failed!!";
-        console.error("🔥 Signin failed:", action.error);
+        state.error = "signin failed!!";
       });
   },
 });
 
-export const { getUser, logout } = userSlice.actions;
 export default userSlice.reducer;
+export const { getUser } = userSlice.actions;

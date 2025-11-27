@@ -69,10 +69,7 @@ export const startChatListener = createAsyncThunk(
     const users = [sender, receiver].sort();
     const docId = `${users[0]}_${users[1]}`;
 
-    if (unsubscribeListener) {
-      unsubscribeListener();
-      unsubscribeListener = null;
-    }
+    if (unsubscribeListener) unsubscribeListener(); // avoids double-listening
 
     const chatsRef = collection(db, "chatRoom", docId, "chats");
     const q = query(chatsRef, orderBy("createdAt"));
@@ -80,6 +77,7 @@ export const startChatListener = createAsyncThunk(
     unsubscribeListener = onSnapshot(q, (snapshot) => {
       const msgs = [];
       snapshot.forEach((doc) => msgs.push(doc.data()));
+
       dispatch(setChats(msgs));
     });
 
@@ -91,8 +89,8 @@ const chatSlice = createSlice({
   name: "chats",
   initialState: {
     chats: [],
-    isLoading: false,
-    error: null,
+    isLoading:false,
+    error:null
   },
   reducers: {
     setChats: (state, action) => {
@@ -101,8 +99,8 @@ const chatSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      .addCase(sendMessages.fulfilled, (state) => {
-        state.isLoading = false;
+      .addCase(sendMessages.fulfilled, (state, action) => {
+        state.isLoading=false;
       })
       .addCase(updateMessage.fulfilled, (state, action) => {
         const msg = state.chats.find((m) => m.chatId === action.payload.chatId);

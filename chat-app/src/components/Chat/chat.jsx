@@ -1,75 +1,136 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import "./Chat.css";
 
+import {
+  collection,
+  addDoc,
+  onSnapshot,
+  doc,
+  deleteDoc,
+  updateDoc,
+  serverTimestamp,
+  orderBy,
+  query,
+} from "firebase/firestore";
+
+import { db } from "../../Firebase/firebaseConfig";
+
 export default function ChatPage() {
   const { state: user } = useLocation();
-
+  const chatId = "user1_user2"; // Change dynamically
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState("");
-  const [editIndex, setEditIndex] = useState(null);
+  const [editId, setEditId] = useState(null);
+  const [menuOpenId, setMenuOpenId] = useState(null); // ID of message with open menu
 
-  const sendMessage = () => {
+  const messagesEndRef = useRef(null);
+
+  // Load messages in real-time
+  useEffect(() => {
+    const ref = collection(db, "chats", chatId, "messages");
+    const q = query(ref, orderBy("createdAt", "asc"));
+    const unsub = onSnapshot(q, (snapshot) => {
+      const msgs = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setMessages(msgs);
+    });
+
+    return () => unsub();
+  }, []);
+
+  // Scroll to bottom
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  const sendMessage = async () => {
     if (!text.trim()) return;
 
-    // If editing
-    if (editIndex !== null) {
-      const updated = [...messages];
-      updated[editIndex].text = text;
-      updated[editIndex].edited = true;
-      setMessages(updated);
-      setEditIndex(null);
+    const ref = collection(db, "chats", chatId, "messages");
+
+    if (editId) {
+      await updateDoc(doc(db, "chats", chatId, "messages", editId), {
+        text,
+        edited: true,
+      });
+      setEditId(null);
       setText("");
+      setMenuOpenId(null);
       return;
     }
 
-    // New message
-    setMessages([
-      ...messages,
-      { sender: "me", text, edited: false }
-    ]);
+    await addDoc(ref, {
+      text,
+      sender: user?.name || "me",
+      edited: false,
+      createdAt: serverTimestamp(),
+    });
 
     setText("");
+    setMenuOpenId(null);
   };
 
-  const deleteMessage = (i) => {
-    const updated = messages.filter((_, index) => index !== i);
-    setMessages(updated);
+  const deleteMessage = async (id) => {
+    await deleteDoc(doc(db, "chats", chatId, "messages", id));
+    if (editId === id) setEditId(null);
+    setMenuOpenId(null);
   };
 
-  const startEdit = (i) => {
-    setEditIndex(i);
-    setText(messages[i].text);
+  const startEdit = (msg) => {
+    setEditId(msg.id);
+    setText(msg.text);
+    setMenuOpenId(null);
+  };
+
+  const toggleMenu = (id) => {
+    setMenuOpenId(menuOpenId === id ? null : id);
   };
 
   return (
     <div className="chat-outer">
-
       <div className="chat-small-container">
-
-        {/* HEADER */}
         <div className="chat-header">
           <h3 className="chat-user-name">{user?.name}</h3>
         </div>
 
-        {/* MESSAGES */}
         <div className="chat-box">
-          {messages.map((msg, i) => (
-            <div
-              key={i}
-              className={`chat-bubble ${msg.sender === "me" ? "me" : "other"}`}
-              onDoubleClick={() => deleteMessage(i)}
-            >
-              <span>{msg.text}</span>
+          {messages.map((msg) => {
+            const isOwner = msg.sender === user?.name;
+            return (
+              <div
+                key={msg.id}
+                className={`msg-row ${isOwner ? "owner-row" : "receiver-row"}`}
+              >
+                <div
+                  className={`chat-bubble ${isOwner ? "me" : "other"}`}
+                  onDoubleClick={() => isOwner && toggleMenu(msg.id)}
+                >
+                  <span>{msg.text}</span>
+                  {msg.edited && <span className="edited-tag">(edited)</span>}
 
-              {msg.edited && <span className="edited-tag">(edited)</span>}
-
-              <span className="edit-icon" onClick={() => startEdit(i)}>✏️</span>
-            </div>
-          ))}
+                  {menuOpenId === msg.id && isOwner && (
+                    <div className="menu-popup">
+                      <div className="menu-item" onClick={() => startEdit(msg)}>
+                        Edit
+                      </div>
+                      <div
+                        className="menu-item delete"
+                        onClick={() => deleteMessage(msg.id)}
+                      >
+                        Delete
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+          <div ref={messagesEndRef} />
         </div>
 
-        {/* INPUT */}
         <div className="chat-input-box">
           <input
             className="chat-input"
@@ -77,13 +138,11 @@ export default function ChatPage() {
             value={text}
             onChange={(e) => setText(e.target.value)}
           />
-
           <button className="chat-send-btn" onClick={sendMessage}>
-            {editIndex !== null ? "Update" : "Send"}
+            {editId ? "Update" : "Send"}
           </button>
         </div>
       </div>
-
     </div>
   );
 }
